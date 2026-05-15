@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Paddy | MVP Database Architecture</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --secondary: #1565c0;
+            --accent: #f57c00;
+            --bg: #f8f9fa;
+            --text: #212121;
+            --card-bg: #ffffff;
+            --border: #e0e0e0;
+            --danger: #c62828;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 20px;
+        }
+        h1 { color: var(--primary); margin-bottom: 5px; }
+        .subtitle { font-style: italic; color: #666; }
+        .container { max-width: 900px; margin: 0 auto; }
+        section {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        h2 { border-left: 5px solid var(--primary); padding-left: 15px; color: var(--primary); }
+        h3 { color: var(--secondary); margin-top: 25px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        th { background-color: #f1f8e9; color: var(--primary); }
+        .req { color: var(--danger); font-weight: bold; }
+        .opt { color: #757575; font-style: italic; }
+        .relationship {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .warning-box {
+            background-color: #ffebee;
+            border: 1px solid var(--danger);
+            padding: 15px;
+            border-radius: 4px;
+            color: var(--danger);
+        }
+        .strategy-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        code { background: #eee; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Ma Paddy - Database Blueprint (MVP)</h1>
+    <p class="subtitle">Architectural Design for Civic-Tech Mental Wellness Web App</p>
+    <p><strong>Role:</strong> Senior Product Architect & Civic-Tech Developer</p>
+</header>
+
+<div class="container">
+
+    <section>
+        <h2>1. Core Database Tables</h2>
+        
+        <!-- Table: Users -->
+        <h3>Table: <code>users</code></h3>
+        <p>Supports both anonymous and registered flows.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Primary Key.</td>
+                </tr>
+                <tr>
+                    <td><code>device_identifier</code></td>
+                    <td>String</td>
+                    <td class="req">Required</td>
+                    <td>Browser fingerprint/Unique ID for anonymous sessions.</td>
+                </tr>
+                <tr>
+                    <td><code>auth_provider_id</code></td>
+                    <td>String</td>
+                    <td class="opt">Optional</td>
+                    <td>For linked accounts (Email/Google).</td>
+                </tr>
+                <tr>
+                    <td><code>nickname</code></td>
+                    <td>String</td>
+                    <td class="opt">Optional</td>
+                    <td>User-chosen name (never use real names).</td>
+                </tr>
+                <tr>
+                    <td><code>language_pref</code></td>
+                    <td>Enum</td>
+                    <td class="req">Required</td>
+                    <td><code>en</code>, <code>fr</code>, <code>pidgin</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>created_at</code></td>
+                    <td>Timestamp</td>
+                    <td class="req">Required</td>
+                    <td>Used for onboarding analytics.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Table: Mood Checkins -->
+        <h3>Table: <code>mood_logs</code></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Primary Key.</td>
+                </tr>
+                <tr>
+                    <td><code>user_id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Foreign Key.</td>
+                </tr>
+                <tr>
+                    <td><code>mood_score</code></td>
+                    <td>Integer</td>
+                    <td class="req">Required</td>
+                    <td>1 (Terrible) to 5 (Great).</td>
+                </tr>
+                <tr>
+                    <td><code>emotions</code></td>
+                    <td>JSON/Array</td>
+                    <td class="opt">Optional</td>
+                    <td>Tags like ["lonely", "stressed"].</td>
+                </tr>
+                <tr>
+                    <td><code>logged_at</code></td>
+                    <td>Timestamp</td>
+                    <td class="req">Required</td>
+                    <td>Defaults to current time.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Table: AI Chat Sessions -->
+        <h3>Table: <code>chat_sessions</code></h3>
+        <p>Groups messages into logical daily or topic-based sessions to reduce data load.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Primary Key.</td>
+                </tr>
+                <tr>
+                    <td><code>user_id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Foreign Key.</td>
+                </tr>
+                <tr>
+                    <td><code>session_summary</code></td>
+                    <td>Text</td>
+                    <td class="opt">Optional</td>
+                    <td>AI-generated summary for quick history recall.</td>
+                </tr>
+                <tr>
+                    <td><code>last_activity</code></td>
+                    <td>Timestamp</td>
+                    <td class="req">Required</td>
+                    <td>For sorting history.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Table: Messages -->
+        <h3>Table: <code>messages</code></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Primary Key.</td>
+                </tr>
+                <tr>
+                    <td><code>session_id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Foreign Key.</td>
+                </tr>
+                <tr>
+                    <td><code>sender_type</code></td>
+                    <td>Enum</td>
+                    <td class="req">Required</td>
+                    <td><code>user</code> or <code>paddy</code> (AI).</td>
+                </tr>
+                <tr>
+                    <td><code>content</code></td>
+                    <td>Text</td>
+                    <td class="req">Required</td>
+                    <td>Encrypted at rest.</td>
+                </tr>
+                <tr>
+                    <td><code>created_at</code></td>
+                    <td>Timestamp</td>
+                    <td class="req">Required</td>
+                    <td>Used for ordering.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Table: Journals -->
+        <h3>Table: <code>journals</code></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Primary Key.</td>
+                </tr>
+                <tr>
+                    <td><code>user_id</code></td>
+                    <td>UUID</td>
+                    <td class="req">Required</td>
+                    <td>Foreign Key.</td>
+                </tr>
+                <tr>
+                    <td><code>content</code></td>
+                    <td>Text</td>
+                    <td class="req">Required</td>
+                    <td>Encrypted user reflections.</td>
+                </tr>
+                <tr>
+                    <td><code>sentiment_tag</code></td>
+                    <td>String</td>
+                    <td class="opt">Optional</td>
+                    <td>Detected sentiment (e.g., "Reflective").</td>
+                </tr>
+                <tr>
+                    <td><code>created_at</code></td>
+                    <td>Timestamp</td>
+                    <td class="req">Required</td>
+                    <td>Timestamp.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>2. Relationships & Entity Diagram</h2>
+        <div class="relationship">
+            USERS (1) <---> (N) MOOD_LOGS <br>
+            USERS (1) <---> (N) JOURNALS <br>
+            USERS (1) <---> (N) CHAT_SESSIONS <br>
+            CHAT_SESSIONS (1) <---> (N) MESSAGES
+        </div>
+        <p><small>Note: All relations use <strong>Cascading Deletes</strong>. If a user chooses to delete their account, all associated mental health data is wiped immediately.</small></p>
+    </section>
+
+    <section>
+        <h2>3. Supporting Anonymous Users Safely</h2>
+        <ul>
+            <li><strong>LocalStorage Token:</strong> When a user starts anonymously, generate a UUID and store it in the browser's <code>localStorage</code>. This maps to the <code>device_identifier</code> in the <code>users</code> table.</li>
+            <li><strong>Graceful Transition:</strong> If the user decides to create an account later, we update the <code>users</code> record with their credentials, keeping their chat and mood history intact.</li>
+            <li><strong>Session Expiry:</strong> Anonymous sessions can be flagged for archival after 90 days of inactivity to protect privacy and save space.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>4. Trust & Safety: What NEVER to store</h2>
+        <div class="warning-box">
+            <ul>
+                <li><strong>NO Precise Geo-location:</strong> Only store general region (e.g., Littoral, Centre) if necessary for local resource guidance.</li>
+                <li><strong>NO Real Names:</strong> Encourage the use of "Paddy Names" or nicknames.</li>
+                <li><strong>NO Plaintext Content:</strong> Chat messages and Journal entries must be encrypted at rest (AES-256).</li>
+                <li><strong>NO Phone Numbers/ID Cards:</strong> This is a companion app, not a clinical health record.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section>
+        <h2>5. Scalability & Low-Data Optimization</h2>
+        <ul>
+            <li><span class="strategy-tag">Pagination</span> <strong>Message Batching:</strong> Only load the last 10 messages of a chat session. Older messages are loaded only on "scroll up."</li>
+            <li><span class="st
